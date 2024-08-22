@@ -40,12 +40,8 @@ public class AAEOnlineParadigm : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // SessionStartHandler = AAEOnlineSessionStart;
-        // SessionEndHandler = AAEOnlineSessionEnd;
-        // RunStartHandler = AAEOnlineRunStart;
-        // RunEndHandler = AAEOnlineRunEnd;
         TrialStartHandler = AAEOnlineTrialStart;
-        TrialEndHandler = AAEOnlineTrialEnd;
+        // TrialEndHandler = AAEOnlineTrialEnd;
         RequestTrackHandler = AAEOnlineRequestHandler;
 
         NetService.Instance.AddDistributer(HandleCmd);
@@ -89,14 +85,14 @@ public class AAEOnlineParadigm : MonoBehaviour
         {
             currentTrial = new Trial(RoadProgressTracker.ROADS[int.Parse(messages[1])]);
             //start coroutine
-            StartCoroutine(CheckVolume(volume));
+            StartCoroutine(RequestAndSetVolume(Trial.volume));  //use a static var in trial
         }
         else if (messages[0] == "TrialCmd")
         {
             if (currentTrial != null)
             {
                 var trialCmd = new string[messages.Length - 1];
-                messages.CopyTo(trialCmd, 1);
+                messages.CopyTo(trialCmd, 1);  //take down the first phrase of original message , copy the rest as a new array
                 currentTrial.HandleCmd(trialCmd);
             }
             else
@@ -104,113 +100,52 @@ public class AAEOnlineParadigm : MonoBehaviour
                 Debug.Log("Skipping trial command: " + messages);
             }
         }
-
-        // if (messages[0] == "Cmd")
-        // {
-        //     if (messages[1] == "AAEOline")
-        //     {
-        //         if (messages[2] == "SetNSession")
-        //         {
-        //             n_session = int.Parse(messages[3]);
-        //         }
-        //
-        //         if (messages[2] == "SetNRun")
-        //         {
-        //             n_run = int.Parse(messages[3]);
-        //         }
-        //
-        //         if (messages[2] == "SetNTrial")
-        //         {
-        //             n_trial = int.Parse(messages[3]);
-        //         }
-        //
-        //         if (messages[2] == "SetTrialLength")
-        //         {
-        //             AAE_interval = float.Parse(messages[3]);
-        //         }
-        //
-        //         if (messages[2] == "Start")
-        //         {
-        //             Debug.Log("AAEOnline Started");
-        //             trigger = true;
-        //         }
-        //
-        //
-        //         if (messages[2] == "SetRoad1On")
-        //         {
-        //             AAEconfig[AAEtype.Road1] = true;
-        //         }
-        //         if (messages[2] == "SetRoad1Off")
-        //         {
-        //             AAEconfig[AAEtype.Road1] = false;
-        //         }
-        //         if (messages[2] == "SetRoad2On")
-        //         {
-        //             AAEconfig[AAEtype.Road2] = true;
-        //         }
-        //         if (messages[2] == "SetRoad2Off")
-        //         {
-        //             AAEconfig[AAEtype.Road2] = false;
-        //         }
-        //         if (messages[2] == "SetRoad3On")
-        //         {
-        //             AAEconfig[AAEtype.Road3] = true;
-        //         }
-        //         if (messages[2] == "SetRoad3Off")
-        //         {
-        //             AAEconfig[AAEtype.Road3] = false;
-        //         }
-        //         if (messages[2] == "SetRoad4On")
-        //         {
-        //             AAEconfig[AAEtype.Road4] = true;
-        //         }
-        //         if (messages[2] == "SetRoad4Off")
-        //         {
-        //             AAEconfig[AAEtype.Road4] = false;
-        //         }
-        //         if (messages[2] == "SetPauseOn")
-        //         {
-        //             AAEconfig[AAEtype.Pause] = true;
-        //         }
-        //         if (messages[2] == "SetPauseOff")
-        //         {
-        //             AAEconfig[AAEtype.Pause] = false;
-        //         }
-        //     }
-        // }
     }
 
     // Update is called once per frame
     void Update()
     {
-        // if (trigger)
-        // {
-        //     startParadigm();
-        //     trigger = false;
-        // }
-
         if (!currentTrial.Update())
         {
-            //TODO:tell python that a trial has begun
+            //new: tell python that a trial has end
+            //py TODO: set py receiver
+            NetService.Instance.SendMessage("TrialEnd");
             currentTrial.Report();
             currentTrial = null;
-            //TODO: show start next trial button
+            
+            GameObject.Find("StartNewTrail").SetActive(true);
+            //new: show start next trial button
         }
 
     }
 
-    void OnStartTrialButtonPressed()
+    // void OnStartTrialButtonPressed()
+    // {
+    //     ExpService.Instance.SendSessionControlCode("start next trial"); //new:  figure out the button problem
+    // }
+    // moved to uibciplugin.cs
+    
+    public IEnumerator RequestAndSetVolume(float volume)
     {
-        ExpService.Instance.SendSessionControlCode("start next trial"); //TODO figure out the button problem
+        yield return new WaitForSeconds(1f);
+        ExpService.Instance.SendSessionControlCode("request volume data");
+        if (volume == 0)
+        {
+            Debug.Log("Volume is zero or None");    
+        }
+        else if (volume != 0)
+        {
+            GetComponent<AudioSource>().volume = volume;
+        }
     }
-
+    
     //################
 
-    public void startParadigm()
-    {
-        ResetAAEtable();
-        StartCoroutine(TrialLogic(n_session, n_run, n_trial)); // TODO:revive it in python
-    }
+    // public void startParadigm()
+    // {
+    //     ResetAAEtable();
+    //     StartCoroutine(TrialLogic(n_session, n_run, n_trial)); // TODO:revive it in python
+    // }
 
     public void AAEOnlineRequestHandler(int i_trial)
     {
@@ -218,36 +153,7 @@ public class AAEOnlineParadigm : MonoBehaviour
         ExpService.Instance.SendSessionControlCode("request track data");
 
     }
-
-
-    // public void AAEOnlineSessionStart(int i_session)
-    // {
-    //     Debug.Log("Session " + (i_session + 1).ToString() + "Start");
-    //     ExpService.Instance.SendSessionControlCode("session start"); // New participant
-    //     ui.UpdateMainText("New Participant Start");
-    // }
-    //
-    // public void AAEOnlineSessionEnd(int i_session)
-    // {
-    //     Debug.Log("Session " + (i_session + 1).ToString() + "End");
-    //     ExpService.Instance.SendSessionControlCode("session end"); // A participant is done participate
-    //     ui.UpdateMainText("Participat End");
-    // }
-    //
-    // public void AAEOnlineRunStart(int i_run)
-    // {
-    //     Debug.Log("Run " + (i_run + 1).ToString() + "Start");
-    //     ExpService.Instance.SendSessionControlCode("run start"); //New scene
-    //     ui.UpdateMainText("Run Start");
-    // }
-    //
-    // public void AAEOnlineRunEnd(int i_run)
-    // {
-    //     Debug.Log("Run " + (i_run + 1).ToString() + "End");
-    //     ExpService.Instance.SendSessionControlCode("run end"); //scene end
-    //     ui.UpdateMainText("Run End");
-    // }
-
+    
     public void AAEOnlineTrialStart(int i_trial)
     {
 
@@ -255,7 +161,6 @@ public class AAEOnlineParadigm : MonoBehaviour
         if (RoadPT.isOnCheckPoint)
         {
             Debug.Log("Trial Road " + (i_trial + 1).ToString() + " : Start");
-            // ��֪��������ʼ
             ExpService.Instance.SendSessionControlCode("trial start");
 
             int i_AAEstate = ValueService.Instance.GenerateMIstate(AAEstate_size);
@@ -268,17 +173,16 @@ public class AAEOnlineParadigm : MonoBehaviour
         }
         else
         {
-            // ������ڼ��㣬�������������һЩ��־��¼���ߴ�����
             Debug.Log("ERROR ��Ҳ��ڼ���");
         }
     }
 
-    public void AAEOnlineTrialEnd(int i_trial)
-    {
-        Debug.Log("Trial " + (i_trial + 1).ToString() + "End");
-        ExpService.Instance.SendSessionControlCode("trial end");
-        ui.UpdateMainText("Trial End");
-    }
+    // public void AAEOnlineTrialEnd(int i_trial)
+    // {
+    //     Debug.Log("Trial " + (i_trial + 1).ToString() + "End");
+    //     ExpService.Instance.SendSessionControlCode("trial end");
+    //     ui.UpdateMainText("Trial End");
+    // }
 
     public IEnumerator TrialLogic(int n_session, int n_run, int n_trial)
     {
@@ -320,20 +224,6 @@ public class AAEOnlineParadigm : MonoBehaviour
 
             //SessionEndHandler(i_session);
             yield return new WaitForSeconds(session_end_interval);
-        }
-    }
-
-    public IEnumerator CheckVolume(float volume)
-    {
-        yield return new WaitForSeconds(1f);
-        ExpService.Instance.SendSessionControlCode("request volume data");
-        if (volume == 0)
-        {
-            Debug.Log("Volume is zero or None");    
-        }
-        else if (volume != 0)
-        {
-            GetComponent<AudioSource>().volume = volume;
         }
     }
 }

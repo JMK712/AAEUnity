@@ -39,4 +39,11 @@ public class UIBCIPlugin : MonoBehaviour
         textMain.text = msg;
     }
 
+    public void OnStartTrialButtonPressed()
+    {
+        NetService.Instance.SendMessage("StartNewTrial");
+        GameObject.Find("StartNewTrial").SetActive(false);
+        //new: figure out the button problem
+        //py TODO: set receiver
+    }
 }

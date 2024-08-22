@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Barmetler;
 using Barmetler.RoadSystem;
@@ -12,6 +13,7 @@ public class Trial
     private Road road;
     private Vector3[] roadPoints;
     private HashSet<int> goodSegments = new HashSet<int>();
+    public static float volume;
     public Transform playerTransform;
 
     public Trial(Road road)
@@ -36,7 +38,8 @@ public class Trial
 
             roadPoints[i] = worldPosition;
         }
-        // TODO set initiated player.transform.position
+        // new: set initiated player.transform.position
+        playerTransform = GameObject.Find("PlayerArmature").transform;
     }
     
     private Vector3 GetClosestPointOnLineSegment(Vector3 start, Vector3 end, Vector3 point)
@@ -66,16 +69,21 @@ public class Trial
                 goodSegments.Add(i);
         }
 
-        return true; // TODO: check when return false to end trial(check point)
+        return PlayDataCollector.isOnCheckPoint switch
+        {
+            false => true,
+            true => false
+        };
+        // new :check when return false to end trial(check point)
     }
 
     public void HandleCmd(string[] cmd)
     {
         if (cmd[0] == "SetMusicVolume")
         {
-            //TODO: set volume in Unity
-            float volume = int.cmd[2];
-            AAEOnlineParadigm.CheckVolume(volume);
+            //new :set volume in Unity
+            volume = Convert.ToSingle(cmd[1]);
+            Debug.Log("get volume from server : " + volume );
         }
     }
 
@@ -88,7 +96,11 @@ public class Trial
     /// </summary>
     public void Report()
     {
-// TODO: netservice
+    // use Net service to send coefficient to py
+    var coefficient = MatchCoefficient();
+    var msg = "TrialCmd_Report_" + coefficient;  //py TODO:py set receiver
+    NetService.Instance.SendMessage(msg);  //convert only 3 decimal places
     }
+    
 }
-//TODO:mne and eeg stuff
+//py TODO:mne and eeg stuff
