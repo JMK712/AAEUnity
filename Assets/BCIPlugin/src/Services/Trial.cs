@@ -3,32 +3,33 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Barmetler;
 using Barmetler.RoadSystem;
+using TMPro;
 using UnityEngine;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 public class Trial
 {
     private const float THRESHOLD_SQR = 0.3f;
-    
+    private GameObject BCIPlugin;
     private Road road;
     private Vector3[] roadPoints;
     private HashSet<int> goodSegments = new HashSet<int>();
     public static float volume;
     public Transform playerTransform;
+    private GameObject Player;
 
     public Trial(Road road)
     {
         this.road = road;
-        playerTransform = GameObject.Find("layerArmaturer").transform;
-        
+        playerTransform = GameObject.Find("PlayerArmature").transform;
         Initialize();
     }
 
     private void Initialize()
     {
         Bezier.OrientedPoint[] orientedPositions = this.road.GetEvenlySpacedPoints(1f);
-
         roadPoints = new Vector3[orientedPositions.Length];
+
         for (int i = 0; i < orientedPositions.Length; i++)
         {
             Bezier.OrientedPoint orientedPoint = orientedPositions[i];
@@ -39,7 +40,11 @@ public class Trial
             roadPoints[i] = worldPosition;
         }
         // new: set initiated player.transform.position
-        playerTransform = GameObject.Find("PlayerArmature").transform;
+        Player = GameObject.Find("PlayerArmature");
+        playerTransform = Player.transform;
+        BCIPlugin = GameObject.Find("BCIPlugin");
+        UpdateUI_CurrentTrialName();
+        DisableUI();  // new: disable UI, enable player controller to control player via input of mouse
     }
     
     private Vector3 GetClosestPointOnLineSegment(Vector3 start, Vector3 end, Vector3 point)
@@ -68,13 +73,16 @@ public class Trial
             if (distanceSqr < THRESHOLD_SQR)
                 goodSegments.Add(i);
         }
-
-        return PlayDataCollector.isOnCheckPoint switch
-        {
-            false => true,
-            true => false
-        };
+        UpdateUI_Coeffient();
+        
+        // new: use a static var to get is
+        // return PlayDataCollector.isOnCheckPoint switch
+        // {
+        //     false => true,
+        //     true => false
+        // };
         // new :check when return false to end trial(check point)
+        return true;
     }
 
     public void HandleCmd(string[] cmd)
@@ -87,10 +95,11 @@ public class Trial
         }
     }
 
-    public float MatchCoefficient()
+    private float MatchCoefficient()  // new : set private method
     {
         return (float)goodSegments.Count / (roadPoints.Length - 1);
     }
+    
     /// <summary>
     ///report match coefficient data to server
     /// </summary>
@@ -101,6 +110,33 @@ public class Trial
     var msg = "TrialCmd_Report_" + coefficient;  //py TODO:py set receiver
     NetService.Instance.SendMessage(msg);  //convert only 3 decimal places
     }
-    
+
+    /// <summary>
+    /// disable mouse input for input system, therefore enable UI to receive click input
+    /// </summary>
+    public void EnableUI()
+    {
+        Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorLocked = false;
+        Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorInputForLook = false;
+    }
+
+    /// <summary>
+    /// enable mouse input for input system, therefore disable UI to receive click input
+    /// </summary>
+    public void DisableUI()
+    {
+        Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorLocked = true;
+        Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorInputForLook = true;
+    }
+
+    private void UpdateUI_Coeffient()
+    {
+        BCIPlugin.GetComponent<UIBCIPlugin>().UpdateCoefficient("Progress"+ (MatchCoefficient()*100f).ToString("f2"));
+    }
+
+    private void UpdateUI_CurrentTrialName()
+    {
+        BCIPlugin.GetComponent<UIBCIPlugin>().UpdateMainText(road.name);
+    }
 }
 //py TODO:mne and eeg stuff
