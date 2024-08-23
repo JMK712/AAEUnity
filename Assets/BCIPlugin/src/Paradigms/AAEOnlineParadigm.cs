@@ -3,40 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using Barmetler.RoadSystem;
-using StarterAssets;
+using UnityEngine.Networking;
 
 public class AAEOnlineParadigm : MonoBehaviour
 {
-    public delegate void Handler(int i);
-    public Handler TrialStartHandler;
-    public Handler TrialEndHandler;
-    public Handler RequestTrackHandler;
-    
     [SerializeField] private List<Road> roads; // 所有可能的道路对象
-    
     public UIBCIPlugin ui;
-    // public RoadProgressTracker RoadPT;
-
-    public Dictionary<int, AAEtype> AAEtable;
-    public Dictionary<AAEtype, bool> AAEconfig;
-
+    public GameObject Player;
     // Start is called before the first frame update
     void Start()
     {
-        // TrialStartHandler = AAEOnlineTrialStart;
-        // TrialEndHandler = AAEOnlineTrialEnd;
-        RequestTrackHandler = AAEOnlineRequestHandler;
-
         NetService.Instance.AddDistributer(HandleCmd);
-
-        // AAEconfig = new Dictionary<AAEtype, bool>();
-        // Array allAAEtypes = Enum.GetValues(typeof(AAEtype));
-        // foreach (AAEtype value in allAAEtypes)
-        // {
-        //     AAEconfig.Add(value, false);
-        // }
-        
-        HandleCmd("StartTrial_0");  // TODO for debug!!!!!
+        Player = GameObject.Find("PlayerArmature");
+        // HandleCmd("StartTrial_0");  // TODO for debug!!!!!
 
     }
 
@@ -47,14 +26,13 @@ public class AAEOnlineParadigm : MonoBehaviour
     public void HandleCmd(string msg)
     {
         string[] messages = msg.Split('_');
-        // Debug.Log(messages[0]);
 
         if (messages[0] == "StartTrial")
         {
             Debug.Log("new a trail: Road "+ messages[1]);
             currentTrial = new Trial(roads[int.Parse(messages[1])]);
             Debug.Log("Created new trail: " + currentTrial); // 新增的调试输出
-            //start coroutine
+            //start coroutine to set volume by interval
             StartCoroutine(SetVolume(Trial.volume));  //use a static var in trial to update volume
         }
         else if (messages[0] == "TrialCmd")
@@ -84,18 +62,12 @@ public class AAEOnlineParadigm : MonoBehaviour
             currentTrial.EnableUI();
             currentTrial = null;
             GameObject.Find("StartNewTrail").SetActive(true);
-            //new: show start next trial button
+            //new: show start next trial button, wait to start new trial
         }
 
     }
 
-    // void OnStartTrialButtonPressed()
-    // {
-    //     ExpService.Instance.SendSessionControlCode("start next trial"); //new:  figure out the button problem
-    // }
-    // moved to uibciplugin.cs
-    
-    public IEnumerator SetVolume(float volume)
+    private IEnumerator SetVolume(float volume)
     {
         while (true)
         {
@@ -106,18 +78,35 @@ public class AAEOnlineParadigm : MonoBehaviour
             }
             else if (volume != 0)
             {
-                GetComponent<AudioSource>().volume = volume;
+                Player.GetComponent<AudioSource>().volume = volume;
             }
         }
     }
     
-    //################
-    public void AAEOnlineRequestHandler(int i_trial)
+    public void SetTrack(float trackCode)
     {
-        Debug.Log("Requesting track for Trial" + (i_trial + 1));
-        NetService.Instance.SendMessage("TrialCmd_RequestTrack");
+        string fileName = "..../Resource" + trackCode + ".wav";  //Assets/Resource/n.wav
+        StartCoroutine(PlayAudio(fileName));
+    }
+    
+    private IEnumerator PlayAudio(string fileName)
+    {
+        AudioSource audioSource = Player.GetComponent<AudioSource>();
+        //获取.wav文件，并转成AudioClip
+        UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file:///" + fileName, AudioType.WAV);
+        //等待转换完成
+        yield return www.SendWebRequest();
+        //获取AudioClip
+        AudioClip audioClip = DownloadHandlerAudioClip.GetContent(www);
+        //设置当前AudioSource组件的AudioClip
+        audioSource.clip = audioClip;
+        //播放声音
+        audioSource.Play();
+    }
+    //
+    
+    //################
 
-    } 
     // TODO sdfsdfsdfdsfsfsdfsdfsdfsdfsdfsdfsdf
     // public void AAEOnlineTrialStart(int i_trial)
     // {
@@ -142,15 +131,6 @@ public class AAEOnlineParadigm : MonoBehaviour
     //     }
     // }
     // TODO sdfsdfsdfdsfsfsdfsdfsdfsdfsdfsdfsdf
-    
-    
-    // public void AAEOnlineTrialEnd(int i_trial)
-    // {
-    //     Debug.Log("Trial " + (i_trial + 1).ToString() + "End");
-    //     ExpService.Instance.SendSessionControlCode("trial end");
-    //     ui.UpdateMainText("Trial End");
-    // }
-    //
     // public IEnumerator TrialLogic(int n_session, int n_run, int n_trial)
     // {
     //

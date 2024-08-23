@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Barmetler;
 using Barmetler.RoadSystem;
-using TMPro;
 using UnityEngine;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -93,6 +92,11 @@ public class Trial
             volume = Convert.ToSingle(cmd[1]);
             Debug.Log("get volume from server : " + volume );
         }
+        else if (cmd[0] == "SetTrack")
+        {
+            var trackCode = Convert.ToSingle(cmd[1]);
+            BCIPlugin.GetComponent<AAEOnlineParadigm>().SetTrack(trackCode);
+        }
     }
 
     private float MatchCoefficient()  // new : set private method
@@ -138,5 +142,5 @@ public class Trial
     {
         BCIPlugin.GetComponent<UIBCIPlugin>().UpdateMainText(road.name);
     }
+    
 }
-//py TODO:mne and eeg stuff

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using Barmetler;
-using Barmetler.RoadSystem;
-using UnityEngine;
+﻿using UnityEngine;
     
 
 public class PlayDataCollector :MonoBehaviour
