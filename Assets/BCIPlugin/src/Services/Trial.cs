@@ -14,7 +14,7 @@ public class Trial
     private Vector3[] roadPoints;
     private HashSet<int> goodSegments = new HashSet<int>();
     public static float volume;
-    public Transform playerTransform;
+    private Transform playerTransform;
     private GameObject Player;
 
     public Trial(Road road)
@@ -38,12 +38,11 @@ public class Trial
 
             roadPoints[i] = worldPosition;
         }
-        // new: set initiated player.transform.position
         Player = GameObject.Find("PlayerArmature");
         playerTransform = Player.transform;
         BCIPlugin = GameObject.Find("BCIPlugin");
         UpdateUI_CurrentTrialName();
-        DisableUI();  // new: disable UI, enable player controller to control player via input of mouse
+        DisableUI(); 
     }
     
     private Vector3 GetClosestPointOnLineSegment(Vector3 start, Vector3 end, Vector3 point)
@@ -74,14 +73,11 @@ public class Trial
         }
         UpdateUI_Coeffient();
         
-        // new: use a static var to get is
-        // return PlayDataCollector.isOnCheckPoint switch
-        // {
-        //     false => true,
-        //     true => false
-        // };
-        // new :check when return false to end trial(check point)
-        return true;
+        return PlayDataCollector.IsOnCheckPoint switch  // check when return false to end trial(check point)
+        {
+            false => true,
+            true => false
+        };
     }
 
     public void HandleCmd(string[] cmd)
@@ -120,8 +116,9 @@ public class Trial
     /// </summary>
     public void EnableUI()
     {
-        Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorLocked = false;
-        Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorInputForLook = false;
+        Cursor.lockState = CursorLockMode.None;
+        // Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorInputForLook = false;
+        
     }
 
     /// <summary>
@@ -129,8 +126,8 @@ public class Trial
     /// </summary>
     public void DisableUI()
     {
-        Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorLocked = true;
-        Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorInputForLook = true;
+        Cursor.lockState = CursorLockMode.Locked;
+        // Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorInputForLook = true;
     }
 
     private void UpdateUI_Coeffient()

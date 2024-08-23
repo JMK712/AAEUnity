@@ -17,7 +17,7 @@ public class UIBCIPlugin : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // NetService.Instance.ConnectToServer();  // 按钮失效，自启动时连接服务
+
     }
 
     // Update is called once per frame
@@ -47,8 +47,6 @@ public class UIBCIPlugin : MonoBehaviour
         NetService.Instance.SendMessage("StartNewTrial");
         GameObject.Find("StartNewTrial").SetActive(false);
         Debug.Log("StartTrialButtonPressed");
-        //new: figure out the button problem
-        //py TODO: set receiver
     }
 
     public void UpdateCoefficient(string msg)

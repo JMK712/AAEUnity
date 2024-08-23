@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 
 public class AAEOnlineParadigm : MonoBehaviour
 {
-    [SerializeField] private List<Road> roads; // 所有可能的道路对象
+    [SerializeField] private List<Road> roads; // all possibly road objects
     public UIBCIPlugin ui;
     public GameObject Player;
     // Start is called before the first frame update
@@ -15,7 +15,8 @@ public class AAEOnlineParadigm : MonoBehaviour
     {
         NetService.Instance.AddDistributer(HandleCmd);
         Player = GameObject.Find("PlayerArmature");
-        // HandleCmd("StartTrial_0");  // TODO for debug!!!!!
+        ui = GameObject.FindWithTag("BCIPlugin").GetComponent<UIBCIPlugin>();
+        HandleCmd("StartTrial_0");  // TODO for debug!!!!!
 
     }
 
@@ -29,9 +30,8 @@ public class AAEOnlineParadigm : MonoBehaviour
 
         if (messages[0] == "StartTrial")
         {
-            Debug.Log("new a trail: Road "+ messages[1]);
+            Debug.Log("new a trail: Road "+ messages[1]+1);
             currentTrial = new Trial(roads[int.Parse(messages[1])]);
-            Debug.Log("Created new trail: " + currentTrial); // 新增的调试输出
             //start coroutine to set volume by interval
             StartCoroutine(SetVolume(Trial.volume));  //use a static var in trial to update volume
         }
@@ -53,18 +53,26 @@ public class AAEOnlineParadigm : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!currentTrial.Update())
+
+        if (currentTrial == null)
         {
-            //new: tell python that a trial has end
-            //py TODO: set py receiver
-            NetService.Instance.SendMessage("TrialEnd");
+            ui.textMain.text = "Click to Start New Trial";
+        }
+        else if (!currentTrial.Update())
+        {
+            
+            NetService.Instance.SendMessage("TrialEnd");  //tell python that a trial has end
             currentTrial.Report();
             currentTrial.EnableUI();
             currentTrial = null;
-            GameObject.Find("StartNewTrail").SetActive(true);
-            //new: show start next trial button, wait to start new trial
+            if (PlayDataCollector.IsOnEndPoint)
+            {
+                Player.transform.position = new Vector3(490.26f,2.045f,13.58f);
+                Player.transform.rotation = new Quaternion(0,270,0,1);
+            }
+            GameObject.Find("StartNewTrail").SetActive(true);  //show start next trial button, wait to start new trial
+            
         }
-
     }
 
     private IEnumerator SetVolume(float volume)
@@ -91,86 +99,13 @@ public class AAEOnlineParadigm : MonoBehaviour
     
     private IEnumerator PlayAudio(string fileName)
     {
-        AudioSource audioSource = Player.GetComponent<AudioSource>();
-        //获取.wav文件，并转成AudioClip
-        UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file:///" + fileName, AudioType.WAV);
-        //等待转换完成
-        yield return www.SendWebRequest();
-        //获取AudioClip
-        AudioClip audioClip = DownloadHandlerAudioClip.GetContent(www);
-        //设置当前AudioSource组件的AudioClip
+        var audioSource = Player.GetComponent<AudioSource>();
+        //get .wav and transform to AudioClip
+        var www = UnityWebRequestMultimedia.GetAudioClip("file:///" + fileName, AudioType.WAV);
+        yield return www.SendWebRequest();  //wait for the request to finish
+        var audioClip = DownloadHandlerAudioClip.GetContent(www);  //get the audioClip
         audioSource.clip = audioClip;
-        //播放声音
         audioSource.Play();
     }
-    //
-    
-    //################
-
-    // TODO sdfsdfsdfdsfsfsdfsdfsdfsdfsdfsdfsdf
-    // public void AAEOnlineTrialStart(int i_trial)
-    // {
-    //
-    //     //isOnCheckpoint Ϊ trueʱ�ſ��Կ�ʼ
-    //     if (RoadPT.isOnCheckPoint)
-    //     {
-    //         Debug.Log("Trial Road " + (i_trial + 1).ToString() + " : Start");
-    //         ExpService.Instance.SendSessionControlCode("trial start");
-    //
-    //         // int i_AAEstate = ValueService.Instance.GenerateMIstate(AAEstate_size);
-    //         // int AAEstate = (int)AAEtable[i_AAEstate];
-    //         // ValueService.Instance.values["AAEstate"] = AAEstate;
-    //         // string msg = "Value_AAEstate_" + AAEstate.ToString();
-    //         // ValueService.Instance.SendValueUpdate(msg);
-    //
-    //         // ui.UpdateMainText(AAEtable[i_AAEstate].ToString() + " : Start!");
-    //     }
-    //     else
-    //     {
-    //         Debug.Log("ERROR ��Ҳ��ڼ���");
-    //     }
-    // }
-    // TODO sdfsdfsdfdsfsfsdfsdfsdfsdfsdfsdfsdf
-    // public IEnumerator TrialLogic(int n_session, int n_run, int n_trial)
-    // {
-    //
-    //
-    //
-    //     for (int i_session = 0; i_session < n_session; i_session++)
-    //     {
-    //         yield return new WaitForSeconds(session_start_interval);
-    //         //SessionStartHandler(i_session);
-    //
-    //         for (int i_run = 0; i_run < n_run; i_run++)
-    //         {
-    //             yield return new WaitForSeconds(trial_start_interval);
-    //             //RunStartHandler(i_run);
-    //
-    //             for (int i_trial = 0; i_trial < n_trial; i_trial++)
-    //             {
-    //                 yield return new WaitForSeconds(trial_start_interval);
-    //                 TrialStartHandler(i_trial); //ʵ�鿪ʼ���������
-    //
-    //                 yield return new WaitForSeconds(AAE_interval);
-    //                 RequestTrackHandler(i_trial); //������һ������
-    //
-    //                 yield return new WaitForSeconds(4.0f); //Wait for receiving message
-    //                 int i_AAEstate = ValueService.Instance.values["AAEstate"];
-    //                 AAEtype aae_state = (AAEtype)i_AAEstate;
-    //                 ui.UpdateMainText("On Line��" + RoadPT.progress +
-    //                                   aae_state.ToString()); // ��ʾ��������������һ�����ߵİٷֱȺ�ע������ƽ��ֵ
-    //
-    //                 yield return new WaitForSeconds(2.0f); //Wait for message to transfer to server
-    //                 TrialEndHandler(i_trial);
-    //                 yield return new WaitForSeconds(trial_end_interval);
-    //             }
-    //
-    //             //RunEndHandler(i_run);
-    //             yield return new WaitForSeconds(run_end_interval);
-    //         }
-    //
-    //         //SessionEndHandler(i_session);
-    //         yield return new WaitForSeconds(session_end_interval);
-    //     }
-    // }
+    //#########################
 }
