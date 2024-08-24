@@ -20,7 +20,7 @@ public class Trial
     public Trial(Road road)
     {
         this.road = road;
-        playerTransform = GameObject.Find("PlayerArmature").transform;
+        // playerTransform = GameObject.Find("PlayerArmature").transform;
         Initialize();
     }
 
@@ -28,21 +28,27 @@ public class Trial
     {
         Bezier.OrientedPoint[] orientedPositions = this.road.GetEvenlySpacedPoints(1f);
         roadPoints = new Vector3[orientedPositions.Length];
-
+        
+        
         for (int i = 0; i < orientedPositions.Length; i++)
         {
             Bezier.OrientedPoint orientedPoint = orientedPositions[i];
-
+            Debug.Log(orientedPositions.Length);
             Bezier.OrientedPoint worldOrientedPoint = orientedPoint.ToWorldSpace(road.transform);
             Vector3 worldPosition = worldOrientedPoint.position;
 
             roadPoints[i] = worldPosition;
         }
+
+        Debug.Log(roadPoints);
         Player = GameObject.Find("PlayerArmature");
         playerTransform = Player.transform;
-        BCIPlugin = GameObject.Find("BCIPlugin");
+        Debug.Log(playerTransform);
+        
+        BCIPlugin = GameObject.FindWithTag("BCIPlugin");
         UpdateUI_CurrentTrialName();
         DisableUI(); 
+        Debug.Log("trial initialized");
     }
     
     private Vector3 GetClosestPointOnLineSegment(Vector3 start, Vector3 end, Vector3 point)
@@ -114,7 +120,7 @@ public class Trial
     /// <summary>
     /// disable mouse input for input system, therefore enable UI to receive click input
     /// </summary>
-    public void EnableUI()
+    public static void EnableUI()
     {
         Cursor.lockState = CursorLockMode.None;
         // Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorInputForLook = false;
@@ -124,7 +130,7 @@ public class Trial
     /// <summary>
     /// enable mouse input for input system, therefore disable UI to receive click input
     /// </summary>
-    public void DisableUI()
+    private static void DisableUI()
     {
         Cursor.lockState = CursorLockMode.Locked;
         // Player.GetComponent<StarterAssets.StarterAssetsInputs>().cursorInputForLook = true;

@@ -1,7 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
 using Barmetler.RoadSystem;
 using UnityEngine.Networking;
 
@@ -16,8 +16,8 @@ public class AAEOnlineParadigm : MonoBehaviour
         NetService.Instance.AddDistributer(HandleCmd);
         Player = GameObject.Find("PlayerArmature");
         ui = GameObject.FindWithTag("BCIPlugin").GetComponent<UIBCIPlugin>();
-        HandleCmd("StartTrial_0");  // TODO for debug!!!!!
-
+        // HandleCmd("StartTrial_0");  // TODO for debug!!!!!
+        Trial.EnableUI();
     }
 
     //#######################
@@ -30,7 +30,7 @@ public class AAEOnlineParadigm : MonoBehaviour
 
         if (messages[0] == "StartTrial")
         {
-            Debug.Log("new a trail: Road "+ messages[1]+1);
+            Debug.Log("new a trail: Road "+ int.Parse(messages[1]));
             currentTrial = new Trial(roads[int.Parse(messages[1])]);
             //start coroutine to set volume by interval
             StartCoroutine(SetVolume(Trial.volume));  //use a static var in trial to update volume
@@ -42,6 +42,8 @@ public class AAEOnlineParadigm : MonoBehaviour
                 var trialCmd = new string[messages.Length - 1];
                 messages.CopyTo(trialCmd, 1);  //take down the first phrase of original message , copy the rest as a new array
                 currentTrial.HandleCmd(trialCmd);  //then give it to HandleCmd method of current trial
+                string result = string.Join(" ", trialCmd);
+                Debug.Log("TrialCmd: " + result);
             }
             else
             {
@@ -63,7 +65,7 @@ public class AAEOnlineParadigm : MonoBehaviour
             
             NetService.Instance.SendMessage("TrialEnd");  //tell python that a trial has end
             currentTrial.Report();
-            currentTrial.EnableUI();
+            Trial.EnableUI();
             currentTrial = null;
             if (PlayDataCollector.IsOnEndPoint)
             {
@@ -87,6 +89,7 @@ public class AAEOnlineParadigm : MonoBehaviour
             else if (volume != 0)
             {
                 Player.GetComponent<AudioSource>().volume = volume;
+                Debug.Log("Volume is set to: " + volume);
             }
         }
     }

@@ -45,7 +45,6 @@ public class UIBCIPlugin : MonoBehaviour
     public void OnStartTrialButtonPressed()
     {
         NetService.Instance.SendMessage("StartNewTrial");
-        GameObject.Find("StartNewTrial").SetActive(false);
         Debug.Log("StartTrialButtonPressed");
     }
 
