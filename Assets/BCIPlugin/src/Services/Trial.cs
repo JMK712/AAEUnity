@@ -90,7 +90,7 @@ public class Trial
         }
         else if (cmd[0] == "SetTrack")
         {
-            var trackCode = Convert.ToSingle(cmd[1]);
+            var trackCode = Convert.ToInt32(cmd[1]);
             BCIPlugin.GetComponent<AAEOnlineParadigm>().SetTrack(trackCode);
         }
     }

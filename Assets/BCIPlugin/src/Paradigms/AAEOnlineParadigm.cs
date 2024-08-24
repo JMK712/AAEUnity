@@ -91,8 +91,13 @@ public class AAEOnlineParadigm : MonoBehaviour
         }
     }
     
-    public void SetTrack(float trackCode)
+    public void SetTrack(int trackCode)
     {
+        if (trackCode == -1)
+        {
+            Player.GetComponent<AudioSource>().mute = true;
+            return;  // exit method
+        }
         string fileName = "..../Resource" + trackCode + ".wav";  //Assets/Resource/n.wav
         StartCoroutine(PlayAudio(fileName));
     }
