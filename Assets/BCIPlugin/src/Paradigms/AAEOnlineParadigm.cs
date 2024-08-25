@@ -11,12 +11,22 @@ public class AAEOnlineParadigm : MonoBehaviour
     [SerializeField] private List<Road> roads; // all possibly road objects
     public UIBCIPlugin ui;
     public GameObject Player;
+    // private GameObject obj;
+    private Queue<String> cmdQueue = new Queue<String>();
+    
     // Start is called before the first frame update
     void Start()
     {
-        NetService.Instance.AddDistributer(HandleCmd);
+        NetService.Instance.AddDistributer(cmd =>
+        {
+            lock (cmdQueue)
+            {
+                cmdQueue.Enqueue(cmd);
+            }
+        });
         Player = GameObject.Find("PlayerArmature");
         ui = GameObject.FindWithTag("BCIPlugin").GetComponent<UIBCIPlugin>();
+        // obj = Resources.Load<GameObject>("Trial");
         // HandleCmd("StartTrial_0");  // TODO for debug!!!!!
         Trial.EnableUI();
     }
@@ -34,20 +44,18 @@ public class AAEOnlineParadigm : MonoBehaviour
         if (messages[0] == "StartTrial")
         {
             Debug.Log("new a trail: Road "+ int.Parse(messages[1]));
+            // var trialGameObj = Instantiate(obj, new Vector3(0, 0, 0), Quaternion.identity);
+            // currentTrial = trialGameObj.GetComponent<Trial>();
             currentTrial = new Trial(roads[int.Parse(messages[1])]);
             Debug.Log("trial started");
             //start coroutine to set volume by interval
-            StartCoroutine(SetVolume(Trial.volume));  //use a static var in trial to update volume
+            StartCoroutine(SetVolume());  //use a static var in trial to update volume
         }
         else if (messages[0] == "TrialCmd")
         {
             if (currentTrial != null)
             {
-                var trialCmd = new string[messages.Length - 1];
-                messages.CopyTo(trialCmd, 1);  //take down the first phrase of original message , copy the rest as a new array
-                currentTrial.HandleCmd(trialCmd);  //then give it to HandleCmd method of current trial
-                string result = string.Join(" ", trialCmd);
-                Debug.Log("TrialCmd: " + result);
+                currentTrial.HandleCmd(messages);  //then give it to HandleCmd method of current trial
             }
             else
             {
@@ -59,6 +67,13 @@ public class AAEOnlineParadigm : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        lock (cmdQueue)
+        {
+            while (cmdQueue.Count > 0)
+            {
+                HandleCmd(cmdQueue.Dequeue());
+            }
+        }
 
         if (currentTrial == null)
         {
@@ -66,7 +81,7 @@ public class AAEOnlineParadigm : MonoBehaviour
         }
         else if (!currentTrial.Update())
         {
-            
+            Debug.Log("Trial End");
             NetService.Instance.SendMessage("TrialEnd");  //tell python that a trial has end
             currentTrial.Report();
             Trial.EnableUI();
@@ -79,16 +94,17 @@ public class AAEOnlineParadigm : MonoBehaviour
         }
     }
 
-    private IEnumerator SetVolume(float volume)
+    private IEnumerator SetVolume()
     {
         while (true)
         {
+            var volume = Trial.volume;
             yield return new WaitForSeconds(1f);
             if (volume == 0)
             {
                 Debug.Log("Volume is zero or None");    
             }
-            else if (volume != 0)
+            else
             {
                 Player.GetComponent<AudioSource>().volume = volume;
                 Debug.Log("Volume is set to: " + volume);

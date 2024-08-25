@@ -33,10 +33,10 @@ public class Trial
         for (int i = 0; i < orientedPositions.Length; i++)
         {
             Bezier.OrientedPoint orientedPoint = orientedPositions[i];
-            Debug.Log(orientedPositions.Length);
+            // Debug.Log(orientedPositions.Length);
             Bezier.OrientedPoint worldOrientedPoint = orientedPoint.ToWorldSpace(road.transform);
             Vector3 worldPosition = worldOrientedPoint.position;
-
+        
             roadPoints[i] = worldPosition;
         }
 
@@ -85,17 +85,21 @@ public class Trial
 
     public void HandleCmd(string[] cmd)
     {
-        if (cmd[0] == "SetMusicVolume")
+        Debug.Log("Processing trial cmd -i.");
+        if (cmd[1] == "SetMusicVolume")
         {
+            Debug.Log("Processing trial cmd -i1.");
             //new :set volume in Unity
-            volume = Convert.ToSingle(cmd[1]);
+            volume = float.Parse(cmd[2]);
             Debug.Log("get volume from server : " + volume );
         }
-        else if (cmd[0] == "SetTrack")
+        else if (cmd[1] == "SetTrack")
         {
-            var trackCode = Convert.ToInt32(cmd[1]);
+            Debug.Log("Processing trial cmd -i2.");
+            var trackCode = Int32.Parse(cmd[2]);
             BCIPlugin.GetComponent<AAEOnlineParadigm>().SetTrack(trackCode);
         }
+        Debug.Log("Processing trial cmd -iend.");
     }
 
     private float MatchCoefficient()  // new : set private method
