@@ -83,13 +83,15 @@ public class AAEOnlineParadigm : MonoBehaviour
         {
             Debug.Log("Trial End");
             NetService.Instance.SendMessage("TrialEnd");  //tell python that a trial has end
-            currentTrial.Report();
             Trial.EnableUI();
             currentTrial = null;
+            PlayDataCollector.IsOnCheckPoint = false;
             if (PlayDataCollector.IsOnEndPoint)
             {
                 Player.transform.position = new Vector3(490.26f,2.045f,13.58f);
                 Player.transform.rotation = new Quaternion(0,270,0,1);
+                
+                PlayDataCollector.IsOnEndPoint = false;
             }
         }
     }

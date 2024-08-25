@@ -75,31 +75,35 @@ public class Trial
                 goodSegments.Add(i);
         }
         UpdateUI_Coeffient();
-        
-        return PlayDataCollector.IsOnCheckPoint switch  // check when return false to end trial(check point)
+
+        if (PlayDataCollector.IsOnCheckPoint)
         {
-            false => true,
-            true => false
-        };
+            Report();
+            return false;
+        }
+        return true;
     }
 
     public void HandleCmd(string[] cmd)
     {
-        Debug.Log("Processing trial cmd -i.");
         if (cmd[1] == "SetMusicVolume")
         {
-            Debug.Log("Processing trial cmd -i1.");
             //new :set volume in Unity
-            volume = float.Parse(cmd[2]);
-            Debug.Log("get volume from server : " + volume );
+            if (cmd[2] != "nan")
+            {
+                volume = float.Parse(cmd[2]);
+                Debug.Log("get volume from server : " + volume );
+            }
+            else
+            {
+                Debug.Log("get non volume from server");
+            }
         }
         else if (cmd[1] == "SetTrack")
         {
-            Debug.Log("Processing trial cmd -i2.");
             var trackCode = Int32.Parse(cmd[2]);
             BCIPlugin.GetComponent<AAEOnlineParadigm>().SetTrack(trackCode);
         }
-        Debug.Log("Processing trial cmd -iend.");
     }
 
     private float MatchCoefficient()  // new : set private method
@@ -114,7 +118,7 @@ public class Trial
     {
     // use Net service to send coefficient to py
     var coefficient = MatchCoefficient();
-    var msg = "TrialCmd_Report_" + coefficient;  //py TODO:py set receiver
+    var msg = "TrialCmd_Report_" + coefficient;
     NetService.Instance.SendMessage(msg);  //convert only 3 decimal places
     }
 
