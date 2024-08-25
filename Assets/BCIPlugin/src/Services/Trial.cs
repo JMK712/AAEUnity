@@ -20,7 +20,8 @@ public class Trial
     public Trial(Road road)
     {
         this.road = road;
-        // playerTransform = GameObject.Find("PlayerArmature").transform;
+
+        Debug.Log("trial created");
         Initialize();
     }
 
@@ -28,7 +29,6 @@ public class Trial
     {
         Bezier.OrientedPoint[] orientedPositions = this.road.GetEvenlySpacedPoints(1f);
         roadPoints = new Vector3[orientedPositions.Length];
-        
         
         for (int i = 0; i < orientedPositions.Length; i++)
         {
@@ -40,14 +40,11 @@ public class Trial
             roadPoints[i] = worldPosition;
         }
 
-        Debug.Log(roadPoints);
-        Player = GameObject.Find("PlayerArmature");
-        playerTransform = Player.transform;
-        Debug.Log(playerTransform);
-        
         BCIPlugin = GameObject.FindWithTag("BCIPlugin");
         UpdateUI_CurrentTrialName();
         DisableUI(); 
+        Player = GameObject.Find("PlayerArmature");
+        playerTransform = Player.transform;
         Debug.Log("trial initialized");
     }
     

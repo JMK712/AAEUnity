@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Barmetler.RoadSystem;
+using UnityEditor.UI;
 using UnityEngine.Networking;
 
 public class AAEOnlineParadigm : MonoBehaviour
@@ -26,12 +27,15 @@ public class AAEOnlineParadigm : MonoBehaviour
 
     public void HandleCmd(string msg)
     {
+        Debug.Log(msg);
+        
         string[] messages = msg.Split('_');
 
         if (messages[0] == "StartTrial")
         {
             Debug.Log("new a trail: Road "+ int.Parse(messages[1]));
             currentTrial = new Trial(roads[int.Parse(messages[1])]);
+            Debug.Log("trial started");
             //start coroutine to set volume by interval
             StartCoroutine(SetVolume(Trial.volume));  //use a static var in trial to update volume
         }
@@ -72,8 +76,6 @@ public class AAEOnlineParadigm : MonoBehaviour
                 Player.transform.position = new Vector3(490.26f,2.045f,13.58f);
                 Player.transform.rotation = new Quaternion(0,270,0,1);
             }
-            GameObject.Find("StartNewTrail").SetActive(true);  //show start next trial button, wait to start new trial
-            
         }
     }
 
@@ -96,23 +98,15 @@ public class AAEOnlineParadigm : MonoBehaviour
     
     public void SetTrack(int trackCode)
     {
+        var audioSource = Player.GetComponent<AudioSource>();
         if (trackCode == -1)
         {
-            Player.GetComponent<AudioSource>().mute = true;
+            audioSource.mute = true;
             return;  // exit method
         }
-        string fileName = "..../Resource" + trackCode + ".wav";  //Assets/Resource/n.wav
-        StartCoroutine(PlayAudio(fileName));
-    }
-    
-    private IEnumerator PlayAudio(string fileName)
-    {
-        var audioSource = Player.GetComponent<AudioSource>();
-        //get .wav and transform to AudioClip
-        var www = UnityWebRequestMultimedia.GetAudioClip("file:///" + fileName, AudioType.WAV);
-        yield return www.SendWebRequest();  //wait for the request to finish
-        var audioClip = DownloadHandlerAudioClip.GetContent(www);  //get the audioClip
-        audioSource.clip = audioClip;
+        string fileName = trackCode.ToString();  //n.wav
+        AudioClip clip = Resources.Load<AudioClip>(fileName);
+        audioSource.clip = clip;
         audioSource.Play();
     }
     //#########################
